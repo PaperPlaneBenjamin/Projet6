@@ -22,10 +22,7 @@ passwordSchema
   .spaces() // aucun espace
   .is()
   .not()
-  .oneOf(["Password123", "12345678"])
-  .is()
-  .not()
-  .empty();
+  .oneOf(["Password123", "12345678"]);
 
 exports.signup = (req, res, next) => {
   if (!emailValidator.validate(req.body.email)) {

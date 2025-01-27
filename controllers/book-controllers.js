@@ -52,6 +52,12 @@ exports.modifyBook = (req, res, next) => {
       if (book.userId != req.auth.userId) {
         res.status(401).json({ message: "Not authorized" });
       } else {
+        if (req.file) {
+          const oldImage = book.imageUrl.split("/images/")[1];
+          fs.unlink(`images/${oldImage}`, (err) => {
+            if (err) console.log("L'image n'a pas pu être supprimé :", err);
+          });
+        }
         Book.updateOne(
           { _id: req.params.id },
           { ...bookObject, _id: req.params.id }
