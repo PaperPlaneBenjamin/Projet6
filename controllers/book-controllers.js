@@ -5,19 +5,31 @@ exports.createBook = (req, res, next) => {
   const bookObject = JSON.parse(req.body.book);
   delete bookObject._id;
   delete bookObject._userId;
+  const grade =
+    bookObject.ratings && bookObject.ratings[0]
+      ? bookObject.ratings[0].grade
+      : 0;
   const book = new Book({
     ...bookObject,
     userId: req.auth.userId,
     imageUrl: `${req.protocol}://${req.get("host")}/images/${
       req.file.filename
     }`,
+    ratings: [
+      {
+        userId: req.auth.userId,
+        grade: grade,
+      },
+    ],
+    averageRating: grade,
   });
   book
     .save()
     .then(() => {
-      res.status(201).json({ message: "Libvre enregistré !" });
+      res.status(201).json({ message: "Livre enregistré !" });
     })
     .catch((error) => {
+      console.log("Erreur lors de l'enregistrement du livre:", error);
       res.status(400).json({ error });
     });
 };
@@ -94,6 +106,72 @@ exports.deleteBook = (req, res, next) => {
 
 exports.getAllBook = (req, res, next) => {
   Book.find()
+    .then((books) => {
+      res.status(200).json(books);
+    })
+    .catch((error) => {
+      res.status(400).json({
+        error: error,
+      });
+    });
+};
+
+exports.rateBook = (req, res, next) => {
+  const { userId, rating } = req.body;
+  const grade = rating;
+  const bookId = req.params.id;
+
+  if (!userId || !bookId || grade === undefined) {
+    return res.status(400).json({ error: "Données manquantes." });
+  }
+
+  if (typeof grade !== "number" || grade < 0 || grade > 5) {
+    return res
+      .status(400)
+      .json({ error: "La note doit être un nombre entre 0 et 5." });
+  }
+
+  Book.findById(bookId)
+    .then((book) => {
+      if (!book) {
+        return res.status(404).json({ error: "Livre non trouvé." });
+      }
+
+      const existingRating = book.ratings.find(
+        (r) => r.userId.toString() === userId
+      );
+      if (existingRating) {
+        return res.status(400).json({ error: "Vous avez déjà noté ce livre." });
+      }
+      book.ratings.push({ userId, grade });
+      book.averageRating =
+        book.ratings.reduce((acc, r) => {
+          if (typeof r.grade === "number" && !isNaN(r.grade)) {
+            return acc + r.grade;
+          }
+          return acc;
+        }, 0) / book.ratings.length;
+
+      return book.save();
+    })
+    .then((updatedBook) => {
+      const bookWithId = updatedBook.toObject();
+      bookWithId.id = bookWithId._id;
+      delete bookWithId._id;
+      res.status(200).json(bookWithId);
+    })
+    .catch((error) => {
+      console.error("Erreur interne du serveur:", error);
+      res
+        .status(500)
+        .json({ error: "Une erreur est survenue.", details: error.message });
+    });
+};
+
+exports.getBestRating = (req, res, next) => {
+  Book.find()
+    .sort({ averageRating: -1 })
+    .limit(3)
     .then((books) => {
       res.status(200).json(books);
     })

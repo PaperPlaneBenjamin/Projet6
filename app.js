@@ -7,7 +7,7 @@ const authRoutes = require("./routes/auth-routes");
 // Connexion à MongoDB
 const app = express();
 mongoose
-  .connect(process.env.DATABASE_URL || 4000)
+  .connect(process.env.DATABASE_URL || "mongodb://localhost:27017")
   .then(() => console.log("Connexion à MongoDB réussie !"))
   .catch(() => console.log("Connexion à MongoDB échouée !"));
 
