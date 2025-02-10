@@ -134,7 +134,7 @@ exports.rateBook = (req, res, next) => {
   Book.findById(bookId)
     .then((book) => {
       if (!book) {
-        return res.status(404).json({ error: "Livre non trouvé." });
+        return res.status(404).json({ error: "Livre introuvable." });
       }
 
       const existingRating = book.ratings.find(
