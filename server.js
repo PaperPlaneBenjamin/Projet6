@@ -1,6 +1,7 @@
 const http = require("http");
 const app = require("./app");
 
+// Fonction pour normaliser le port et s'assurer qu'il est valide
 const normalizePort = (val) => {
   const port = parseInt(val, 10);
 
@@ -12,7 +13,9 @@ const normalizePort = (val) => {
   }
   return false;
 };
-const port = normalizePort(process.env.PORT || "3001");
+
+// Récupération du port défini dans les variables d'environnement
+const port = normalizePort(process.env.PORT);
 app.set("port", port);
 
 const errorHandler = (error) => {
@@ -36,6 +39,7 @@ const errorHandler = (error) => {
   }
 };
 
+// Création du serveur HTTP avec l'application Express
 const server = http.createServer(app);
 
 server.on("error", errorHandler);
@@ -45,4 +49,5 @@ server.on("listening", () => {
   console.log("Listening on " + bind);
 });
 
+// Démarrage du serveur sur le port défini
 server.listen(port);
