@@ -12,9 +12,9 @@ passwordSchema
   .is()
   .max(30)
   .has()
-  .uppercase()
+  .uppercase() // doit contenir une majuscule
   .has()
-  .lowercase()
+  .lowercase() // doit contenir une minuscule
   .has()
   .digits() // doit contenir un chiffre
   .has()
@@ -22,7 +22,7 @@ passwordSchema
   .spaces() // aucun espace
   .is()
   .not()
-  .oneOf(["Password123", "12345678"]);
+  .oneOf(["Password123", "12345678", "azerty"]);
 
 exports.signup = (req, res, next) => {
   if (!emailValidator.validate(req.body.email)) {
@@ -38,7 +38,7 @@ exports.signup = (req, res, next) => {
 
   const passwordStrength = zxcvbn(req.body.password);
   if (passwordStrength.score < 2) {
-    // Score sur 4
+    // zxcvbn note le score de 0 à 4 en fonction de la force du mot de passe
     return res.status(400).json({
       message:
         "Le mot de passe est trop faible. Essayez d'ajouter des caractères spéciaux, des chiffres, ou des lettres majuscules.",
@@ -47,10 +47,10 @@ exports.signup = (req, res, next) => {
 
   User.findOne({ email: req.body.email })
     .then((user) => {
+      // si un user avec cet email existe déjà
       if (user) {
         return res.status(400).json({ message: "Email déjà utilisé !" });
       }
-
       bcrypt
         .hash(req.body.password, 10)
         .then((hash) => {
@@ -84,6 +84,7 @@ exports.login = (req, res, next) => {
               .status(401)
               .json({ message: "Paire login/mot de passe incorrecte" });
           }
+          // si le mot de passe est valide, on renvoie un token et on l'attache au userId
           res.status(200).json({
             userId: user._id,
             token: jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
